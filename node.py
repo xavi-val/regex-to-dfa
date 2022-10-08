@@ -97,6 +97,61 @@ class StarNode(Node):
         self.lastpos = self.child.findlastpos()
         return self.lastpos
 
+class PlusNode(Node):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.child = None
+
+    def create_subtree(self, nodestack):
+        operand = nodestack.pop()
+        if isinstance(operand, Node):
+            self.child = operand
+        else:
+            self.child = LeafNode(parent=self, string=operand)
+
+    def __str__(self):
+        return '[ (' + str(self.child) + ') + ]'
+
+    def isnullable(self):
+        a = self.child.isnullable()
+        self.nullable = a
+        return self.nullable
+
+    def findfirstpos(self):
+        self.firstpos = self.child.findfirstpos()
+        return self.firstpos
+
+    def findlastpos(self):
+        self.lastpos = self.child.findlastpos()
+        return self.lastpos
+
+class QuestionNode(Node):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.child = None
+
+    def create_subtree(self, nodestack):
+        operand = nodestack.pop()
+        if isinstance(operand, Node):
+            self.child = operand
+        else:
+            self.child = LeafNode(parent=self, string=operand)
+
+    def __str__(self):
+        return '[ (' + str(self.child) + ') ? ]'
+
+    def isnullable(self):
+        self.child.isnullable()
+        self.nullable = True
+        return True
+
+    def findfirstpos(self):
+        self.firstpos = self.child.findfirstpos()
+        return self.firstpos
+
+    def findlastpos(self):
+        self.lastpos = self.child.findlastpos()
+        return self.lastpos
 
 class OrNode(Node):
     def __init__(self, parent):

@@ -1,4 +1,4 @@
-from node import LeafNode,ConcatNode,OrNode,StarNode,Node
+from node import LeafNode,ConcatNode,OrNode,StarNode,Node,PlusNode,QuestionNode
 
 
 class SyntaxTree:
@@ -37,6 +37,14 @@ class SyntaxTree:
         elif isinstance(node,StarNode):
             print('star', node.firstpos,node.lastpos,node.nullable)
             self.print_firstpos(node.child)
+        
+        elif isinstance(node,PlusNode):
+            print('plus', node.firstpos,node.lastpos,node.nullable)
+            self.print_firstpos(node.child)
+        
+        elif isinstance(node,QuestionNode):
+            print('question', node.firstpos,node.lastpos,node.nullable)
+            self.print_firstpos(node.child)
 
         elif isinstance(node,OrNode):
             print('or',node.firstpos,node.lastpos,node.nullable)
@@ -62,14 +70,22 @@ class SyntaxTree:
         # ) . a
         # * . a
         # * . (
+        # + . a
+        # + . (
+        # ? . a
+        # ? . (
         # ) . (
         for i in range(0,len(string)-1):
             result=result+string[i]
-            if (string[i].isalpha() and string[i+1].isalpha()) or \
-                    (string[i].isalpha() and string[i+1]=='(') or \
-                    (string[i]==')' and string[i+1].isalpha()) or \
-                    (string[i]=='*' and string[i+1].isalpha()) or \
+            if (string[i].isalnum() and string[i+1].isalnum()) or \
+                    (string[i].isalnum() and string[i+1]=='(') or \
+                    (string[i]==')' and string[i+1].isalnum()) or \
+                    (string[i]=='*' and string[i+1].isalnum()) or \
                     (string[i]=='*' and string[i+1]=='(') or \
+                    (string[i]=='+' and string[i+1].isalnum()) or \
+                    (string[i]=='+' and string[i+1]=='(') or \
+                    (string[i]=='?' and string[i+1].isalnum()) or \
+                    (string[i]=='?' and string[i+1]=='(') or \
                     (string[i]==')' and string[i+1]=='('):
                 result += '.'
         result = result + string[-1]
@@ -77,7 +93,7 @@ class SyntaxTree:
 
 
     def not_greater(self, i, j):
-        prioriy = {'*': 3, '.':2 ,'|': 1}
+        prioriy = {'?': 5, '+':4, '*': 3, '.':2 ,'|': 1}
         try:
             a = prioriy[i]
             b = prioriy[j]
@@ -90,7 +106,7 @@ class SyntaxTree:
         opstack=[]
 
         for r in self.regex:
-            if r.isalpha() or r=='#':
+            if r.isalnum() or r=='#':
                 nodestack.append(r)
 
             elif r == '(':
@@ -122,6 +138,10 @@ class SyntaxTree:
             op=ConcatNode(parent=None)
         elif op=='|':
             op=OrNode(parent=None)
+        elif op=='+':
+            op=PlusNode(parent=None)
+        elif op=='?':
+            op=QuestionNode(parent=None)
         else:
             raise Exception('Unknown Operator!')
 
@@ -152,6 +172,20 @@ class SyntaxTree:
                 else:
                     self.followpos[i-1]=node.firstpos
             self.findfollowpos(node.child)
+
+        # if n is a + (closure) Node and i is a position in the
+        # Lastpos(n), then all positions in Firstpos(n) are Followpos(i)
+        elif isinstance(node,PlusNode):
+            for i in node.lastpos:
+                if self.followpos[i-1]:
+                    self.followpos[i-1]=list(set(self.followpos[i-1]+node.firstpos))
+                else:
+                    self.followpos[i-1]=node.firstpos
+            self.findfollowpos(node.child)
+
+        elif not isinstance(node,LeafNode):
+            self.findfollowpos(node.lchild)
+            self.findfollowpos(node.rchild)
 
         return
 

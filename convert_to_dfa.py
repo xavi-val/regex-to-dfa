@@ -1,4 +1,4 @@
-from node import LeafNode,StarNode
+from node import LeafNode, PlusNode, QuestionNode,StarNode
 
 class State:
     def __init__(self,name,statenumber):
@@ -33,6 +33,10 @@ class ConvertToDfa:
                     self.leaf_nodes[node.string]=[node.number,]
         elif isinstance(node,StarNode):
             self.find_leaf_nodes(node.child)
+        elif isinstance(node,PlusNode):
+            self.find_leaf_nodes(node.child)
+        elif isinstance(node,QuestionNode):
+            self.find_leaf_nodes(node.child)
         else:
             self.find_leaf_nodes(node.lchild)
             self.find_leaf_nodes(node.rchild)
@@ -45,6 +49,7 @@ class ConvertToDfa:
                    21:'U',22:'V',23:'W',24:'X',25:'Y',26:'Z'}
 
         self.find_leaf_nodes(self.tree.root)
+        print("leafs")
         print(self.leaf_nodes)
 
         self.initial_state=State(name='A',statenumber=self.initial_statenumber)
@@ -55,11 +60,11 @@ class ConvertToDfa:
         while len(left_states)!=0:
             state=left_states.pop()
             if state not in seen_states:
-                seen_states.append(state)
-                print('state=', str(state))
+                seen_states.append(state)                
+                print('\nState= ', str(state))
                 for string in self.leaf_nodes:
                     i=[elem for elem in state.statenumber if elem in self.leaf_nodes[string]]
-                    print('str=',string,'i=',i)
+                    print('\t str= ',string,'i=',i)
                     if len(i)!=0:
                         next_statenumber = []
 
@@ -69,13 +74,13 @@ class ConvertToDfa:
                         for seen in seen_states:
                             if next_statenumber == seen.statenumber:
                                 state.Dtran[string] = seen
-                                print('tran=', string, str(seen))
+                                print('\t tran= ', string, str(seen))
                                 break
                         else:
                             next_state=State(name=state_dic[x],statenumber=next_statenumber)
                             x=x+1
                             state.Dtran[string] = next_state
-                            print('tran=', string, str(next_state))
+                            print('\t tran=', string, str(next_state))
                             left_states.append(next_state)
 
 
